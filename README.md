@@ -7,7 +7,7 @@ A simple API Ping tool to feed an OpenAPI 3.0 description file and call all endp
 * Pass custom headers, e.g. `Authorization`
 * Create random `integer` and `string` parameters for urls
 * Track the time and response body per request
-* Output the results to console, CSV, Html or Markdown
+* Output the results to console, CSV, HTML or Markdown
 
 ## Latest Versions
 * 0.1.0
@@ -16,7 +16,7 @@ A simple API Ping tool to feed an OpenAPI 3.0 description file and call all endp
 Download the latest [release here][3].
 
 ## Usage
-For a quick start download a [release][3], change into the directory and execute the binary with your options:
+For a quick start download a [release][3], change into the directory and execute the binary with your options, e.g.:
 ```shell script
 ./aping -input="calls.json" -header='{\"Authorization\": \"Bearer eyXYZ\"}' -response -base=http://localhost:8080/api -out=csv
 ```
@@ -29,13 +29,13 @@ Usage
   -base string
         The base url to query
   -header string
-        Pass a a custom header as JSON string, e.g. '{\"Authorization\": \"Bearer TOKEN\"}' (default "{}")
+        Pass a custom header as JSON string, e.g. '{\"Authorization\": \"Bearer TOKEN\"}' (default "{}")
   -loop int
         How often to loop through all calls (default 1)
   -out string
         The output format. Options: console, csv, html, md (default "console")
   -response
-        Include the responses in the output
+        Include the response body in the output
   -timeout int
         The timeout in seconds per request (default 5)
   -worker int
@@ -43,14 +43,15 @@ Usage
 ```
 
 #### Input
-Reference a file input somewhere reachable by your machine. References in the [OpenAPI][2] specification can be resolved if relative to the main file.
+Reference a file input somewhere reachable by your machine. 
+References in the [OpenAPI][2] specification can be resolved if absolute relative to the main file.
 
 #### Base
 Pass a base url such as `http://localhost:8080/api`.
 If non is given the `servers` array of the [OpenAPI][2] specification will be presented to pick a server from.
 
 #### Header
-Pass custom headers to pass with every request as an escaped JSON string such as `'{\"Authorization\": \"Bearer eyXYZ\"}'`.
+Pass custom headers to send with every request as an escaped JSON string such as `'{\"Authorization\": \"Bearer eyXYZ\"}'`.
 
 The default headers are
 ```
@@ -63,7 +64,7 @@ The default headers are
 You can override these options by passing the same key.
 
 #### Output
-Define an output format. The output is writen to a local `aping.XYZ` file, depending on your choice.
+Define an output format. The output is written to a local `aping.XYZ` file, depending on your choice.
 
 ## Build
 [Download and install][5] Golang for your platform.
@@ -71,7 +72,7 @@ Define an output format. The output is writen to a local `aping.XYZ` file, depen
 Clone this repository and build your own version:
 ```shell script
 git clone https://github.com/elipZis/aPing.git
-go build -o aping elipzis.com/aping
+go build -o aping github.com/elipZis/aPing
 ```
 
 ### Compatibility
@@ -93,7 +94,7 @@ This program uses multiple other libraries. Credits and thanks to all the develo
 * Pretty console printer [go-pretty][7]
 
 ## Disclaimer
-This source and the whole package comes without warranty. 
+This source and the whole package comes without a warranty. 
 It may or may not harm your computer. Please use with care. 
 Any damage cannot be related back to the author. 
 The source has been tested on a virtual environment and scanned for viruses and has passed all tests.

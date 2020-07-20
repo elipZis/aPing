@@ -69,11 +69,11 @@ var (
 	inputPtr    = flag.String("input", "", "*The path/url to the Swagger/OpenAPI 3.0 input source")
 	basePathPtr = flag.String("base", "", "The base url to query")
 	outputPtr   = flag.String("out", "console", "The output format. Options: console, csv, html, md")
-	headerPtr   = flag.String("header", "{}", "Pass a a custom header as JSON string, e.g. {'Authorization': 'Bearer TOKEN'}")
+	headerPtr   = flag.String("header", "{}", "Pass a custom header as JSON string, e.g. '{\"Authorization\": \"Bearer TOKEN\"}'")
 	workerPtr   = flag.Int("worker", 1, "The amount of parallel workers to use")
 	timeoutPtr  = flag.Int("timeout", 5, "The timeout in seconds per request")
 	loopPtr     = flag.Int("loop", 1, "How often to loop through all calls")
-	responsePtr = flag.Bool("response", false, "Include the responses in the output")
+	responsePtr = flag.Bool("response", false, "Include the response body in the output")
 
 	basePath string
 )
@@ -104,7 +104,7 @@ func init() {
 	flag.IntVar(workerPtr, "w", 1, "The amount of parallel workers to use")
 	flag.IntVar(timeoutPtr, "t", 5, "The timeout in seconds per request")
 	flag.IntVar(loopPtr, "l", 1, "How often to loop through all calls")
-	flag.BoolVar(responsePtr, "r", false, "Include the responses in the output")
+	flag.BoolVar(responsePtr, "r", false, "Include the response body in the output")
 }
 
 //

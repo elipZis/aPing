@@ -1,4 +1,4 @@
-module elipZis.com/aPing
+module github.com/elipZis/aPing
 
 go 1.14
 
