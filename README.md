@@ -10,6 +10,8 @@ A simple API Ping tool to feed an OpenAPI 3.0 description file and call all endp
 * Output the results to console, CSV, HTML or Markdown
 
 ## Latest Versions
+* 0.2.0
+  * Added an option to configure included query methods
 * 0.1.0
   * Initial release
   
@@ -40,6 +42,8 @@ Usage
         The timeout in seconds per request (default 5)
   -worker int
         The amount of parallel workers to use (default 1)
+  -methods string
+        An array of query methods to include, e.g. '[\"GET\", \"POST\"]' (default "[\"GET\",\"POST\"]")
 ```
 
 #### Input
@@ -62,6 +66,11 @@ The default headers are
 ```
 
 You can override these options by passing the same key.
+
+#### Worker
+How many parallel processes should be spawned to query your endpoints.
+
+*Ensure that your endpoint can handle multiple requests, otherwise multiple workers might run into the timeout.*
 
 #### Output
 Define an output format. The output is written to a local `aping.XYZ` file, depending on your choice.

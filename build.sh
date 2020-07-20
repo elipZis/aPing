@@ -8,7 +8,7 @@ fi
 package_split=(${package//\// })
 package_name=${package_split[-1]}
 
-version=0.1.0
+version=0.2.0
 platforms=("windows/amd64" "windows/386" "linux/amd64" "linux/386")
 
 for platform in "${platforms[@]}"

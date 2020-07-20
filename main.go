@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -54,6 +55,9 @@ var Headers = map[string]string{
 	"User-Agent":   "aPing",
 }
 
+// Methods to exclude
+var QueryMethods []string
+
 // The HTTP Client to reuse
 var client *http.Client
 
@@ -66,14 +70,15 @@ var pingPool = sync.Pool{
 
 // Define the possible command line arguments
 var (
-	inputPtr    = flag.String("input", "", "*The path/url to the Swagger/OpenAPI 3.0 input source")
-	basePathPtr = flag.String("base", "", "The base url to query")
-	outputPtr   = flag.String("out", "console", "The output format. Options: console, csv, html, md")
-	headerPtr   = flag.String("header", "{}", "Pass a custom header as JSON string, e.g. '{\"Authorization\": \"Bearer TOKEN\"}'")
-	workerPtr   = flag.Int("worker", 1, "The amount of parallel workers to use")
-	timeoutPtr  = flag.Int("timeout", 5, "The timeout in seconds per request")
-	loopPtr     = flag.Int("loop", 1, "How often to loop through all calls")
-	responsePtr = flag.Bool("response", false, "Include the response body in the output")
+	inputFlag    = flag.String("input", "", "*The path/url to the Swagger/OpenAPI 3.0 input source")
+	basePathFlag = flag.String("base", "", "The base url to query")
+	outputFlag   = flag.String("out", "console", "The output format. Options: console, csv, html, md")
+	headerFlag   = flag.String("header", "{}", "Pass a custom header as JSON string, e.g. '{\"Authorization\": \"Bearer TOKEN\"}'")
+	workerFlag   = flag.Int("worker", 1, "The amount of parallel workers to use")
+	timeoutFlag  = flag.Int("timeout", 5, "The timeout in seconds per request")
+	loopFlag     = flag.Int("loop", 1, "How often to loop through all calls")
+	responseFlag = flag.Bool("response", false, "Include the response body in the output")
+	methodsFlag  = flag.String("methods", "[\"GET\",\"POST\"]", "An array of query methods to include, e.g. '[\"GET\", \"POST\"]'")
 
 	basePath string
 )
@@ -98,13 +103,14 @@ const RandomStringCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY
 
 // Init some short variable options
 func init() {
-	flag.StringVar(inputPtr, "i", "", "*The path/url to the Swagger/OpenAPI 3.0 input source")
-	flag.StringVar(basePathPtr, "b", "", "The base url to query")
-	flag.StringVar(outputPtr, "o", "console", "The output format. Options: console, csv, html, md")
-	flag.IntVar(workerPtr, "w", 1, "The amount of parallel workers to use")
-	flag.IntVar(timeoutPtr, "t", 5, "The timeout in seconds per request")
-	flag.IntVar(loopPtr, "l", 1, "How often to loop through all calls")
-	flag.BoolVar(responsePtr, "r", false, "Include the response body in the output")
+	flag.StringVar(inputFlag, "i", "", "*The path/url to the Swagger/OpenAPI 3.0 input source")
+	flag.StringVar(basePathFlag, "b", "", "The base url to query")
+	flag.StringVar(outputFlag, "o", "console", "The output format. Options: console, csv, html, md")
+	flag.IntVar(workerFlag, "w", 1, "The amount of parallel workers to use")
+	flag.IntVar(timeoutFlag, "t", 5, "The timeout in seconds per request")
+	flag.IntVar(loopFlag, "l", 1, "How often to loop through all calls")
+	flag.BoolVar(responseFlag, "r", false, "Include the response body in the output")
+	flag.StringVar(methodsFlag, "m", "[\"GET\",\"POST\"]", "An array of query methods to include, e.g. '[\"GET\", \"POST\"]'")
 }
 
 //
@@ -113,8 +119,8 @@ func main() {
 	flag.Parse()
 
 	// Parse the input file
-	if inputPtr == nil || *inputPtr != "" {
-		file, err := ioutil.ReadFile(*inputPtr)
+	if inputFlag == nil || *inputFlag != "" {
+		file, err := ioutil.ReadFile(*inputFlag)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -130,7 +136,7 @@ func main() {
 		if swaggerOpenApi.OpenAPI != "" && strings.HasPrefix(swaggerOpenApi.OpenAPI, "3") {
 		} else if swaggerOpenApi.Swagger != "" && strings.HasPrefix(swaggerOpenApi.Swagger, "2") {
 		} else {
-			log.Fatal("The input file does not define its version as Swagger 2.0 or OpenAPI 3.0!", *inputPtr)
+			log.Fatal("The input file does not define its version as Swagger 2.0 or OpenAPI 3.0!", *inputFlag)
 		}
 
 		//
@@ -138,10 +144,10 @@ func main() {
 			IsExternalRefsAllowed: true,
 		}
 		var swagger *openapi3.Swagger
-		if validUrl, isValid := isValidUrl(*inputPtr); isValid {
+		if validUrl, isValid := isValidUrl(*inputFlag); isValid {
 			swagger, err = swaggerLoader.LoadSwaggerFromURI(validUrl)
 		} else {
-			swagger, err = swaggerLoader.LoadSwaggerFromFile(*inputPtr)
+			swagger, err = swaggerLoader.LoadSwaggerFromFile(*inputFlag)
 		}
 		if err != nil {
 			log.Fatal(err)
@@ -151,17 +157,19 @@ func main() {
 		parseHeader()
 		// Check for a base path
 		parseBase(swagger)
+		// Check for methods to include
+		parseQueryMethods()
 
 		//
 		if swagger.Info != nil {
 			log.Println(fmt.Sprintf("Pinging '%s - %s'", swagger.Info.Title, swagger.Info.Description))
 		} else {
-			log.Println(fmt.Sprintf("Pinging '%s - %s'", *inputPtr, *basePathPtr))
+			log.Println(fmt.Sprintf("Pinging '%s - %s'", *inputFlag, *basePathFlag))
 		}
 
 		// Create a client with timeout and redirect handler
 		client = &http.Client{
-			Timeout: time.Second * time.Duration(*timeoutPtr),
+			Timeout: time.Second * time.Duration(*timeoutFlag),
 			// Pass the headers in case of redirects
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				for key, val := range via[0].Header {
@@ -174,7 +182,11 @@ func main() {
 		// Count all pingable routes for a correct output
 		var pings int
 		for path, pathItem := range swagger.Paths {
-			for _, operation := range pathItem.Operations() {
+			for method, operation := range pathItem.Operations() {
+				// Skip non-given methods
+				if _, isIncluded := contains(QueryMethods, method); !isIncluded {
+					continue
+				}
 				// Skip routes with request bodies (not supported)
 				if operation.RequestBody != nil && operation.RequestBody.Value.Required {
 					continue
@@ -198,8 +210,8 @@ func main() {
 		progressWriter.ShowTime(true)
 		progressWriter.ShowTracker(true)
 		progressWriter.ShowValue(true)
-		progressWriter.SetNumTrackersExpected(*loopPtr)
-		progressWriter.ShowOverallTracker(*loopPtr > 1)
+		progressWriter.SetNumTrackersExpected(*loopFlag)
+		progressWriter.ShowOverallTracker(*loopFlag > 1)
 		progressWriter.SetTrackerLength(pings)
 		progressWriter.SetSortBy(progress.SortByPercentDsc)
 		progressWriter.SetStyle(progress.StyleBlocks)
@@ -210,20 +222,20 @@ func main() {
 		go progressWriter.Render()
 
 		// Prepare the progress trackers
-		progressTrackers := make([]progress.Tracker, *loopPtr)
-		for i := 0; i < *loopPtr; i++ {
+		progressTrackers := make([]progress.Tracker, *loopFlag)
+		for i := 0; i < *loopFlag; i++ {
 			progressTrackers[i] = progress.Tracker{Message: fmt.Sprintf("Pinging %d routes (Round %d)", pings, i+1), Total: int64(pings), Units: progress.UnitsDefault}
 			progressWriter.AppendTracker(&progressTrackers[i])
 		}
 		// Start looping
-		for i := 0; i < *loopPtr; i++ {
+		for i := 0; i < *loopFlag; i++ {
 			loop(pings, swagger, &progressTrackers[i])
 		}
 		progressWriter.Stop()
 
 		// If an output file is given, write to it
-		if outputPtr != nil && *outputPtr != "" {
-			switch strings.ToLower(*outputPtr) {
+		if outputFlag != nil && *outputFlag != "" {
+			switch strings.ToLower(*outputFlag) {
 			case "console":
 				log.Println("\n" + tableWriter.Render())
 			case "csv":
@@ -254,7 +266,7 @@ func loop(pings int, swagger *openapi3.Swagger, progressTracker *progress.Tracke
 	jobs := make(chan *Ping, pings)
 
 	// Init some workers
-	for worker := 0; worker < *workerPtr; worker++ {
+	for worker := 0; worker < *workerFlag; worker++ {
 		go ping(jobs, &waitGroup, progressTracker)
 	}
 
@@ -262,6 +274,10 @@ func loop(pings int, swagger *openapi3.Swagger, progressTracker *progress.Tracke
 	var ping *Ping
 	for path, pathItem := range swagger.Paths {
 		for method, operation := range pathItem.Operations() {
+			// Skip excluded methods
+			if _, isIncluded := contains(QueryMethods, method); !isIncluded {
+				continue
+			}
 			// Skip routes with request bodies (not supported)
 			if operation.RequestBody != nil && operation.RequestBody.Value.Required {
 				continue
@@ -306,9 +322,11 @@ func ping(pings <-chan *Ping, waitGroup *sync.WaitGroup, progressTracker *progre
 		if err != nil {
 			tableWriter.AppendRow(table.Row{ping.Url, methodName, elapsed, fmt.Sprintf("[aPing] The HTTP request failed with error %s", err)})
 		} else {
-			if *responsePtr {
+			if *responseFlag {
 				data, _ := ioutil.ReadAll(response.Body)
-				tableWriter.AppendRow(table.Row{ping.Url, methodName, elapsed, string(data)})
+				re := regexp.MustCompile(`\r?\n`)
+				bodyData := re.ReplaceAllString(string(data), " ")
+				tableWriter.AppendRow(table.Row{ping.Url, methodName, elapsed, bodyData})
 				_ = response.Body.Close()
 			} else {
 				tableWriter.AppendRow(table.Row{ping.Url, methodName, elapsed, "-"})
@@ -323,7 +341,7 @@ func ping(pings <-chan *Ping, waitGroup *sync.WaitGroup, progressTracker *progre
 
 // Parse any given base url or check for Swagger servers
 func parseBase(swagger *openapi3.Swagger) {
-	if basePathPtr == nil || *basePathPtr == "" {
+	if basePathFlag == nil || *basePathFlag == "" {
 		// Check for servers
 		var servers []string
 		if swagger.Servers != nil {
@@ -364,19 +382,25 @@ func parseBase(swagger *openapi3.Swagger) {
 			}
 		}
 	} else {
-		basePath = *basePathPtr
+		basePath = *basePathFlag
 	}
 }
 
 // Parse any given header and override/add it to the global header
 func parseHeader() {
 	var result map[string]string
-	err := json.Unmarshal([]byte(*headerPtr), &result)
+	err := json.Unmarshal([]byte(*headerFlag), &result)
 	checkError(err)
 
 	for key, value := range result {
 		Headers[key] = value
 	}
+}
+
+// Parse all query methods to includefor calls
+func parseQueryMethods() {
+	err := json.Unmarshal([]byte(*methodsFlag), &QueryMethods)
+	checkError(err)
 }
 
 // Create a "pingable" url with parameters
@@ -452,6 +476,16 @@ func isValidUrl(toTest string) (*url.URL, bool) {
 	}
 
 	return u, true
+}
+
+// Contains a string in a slice
+func contains(slice []string, val string) (int, bool) {
+	for i, item := range slice {
+		if item == val {
+			return i, true
+		}
+	}
+	return -1, false
 }
 
 // If an error pops up, fail
