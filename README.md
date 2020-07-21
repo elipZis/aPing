@@ -1,4 +1,4 @@
-# aPing [![GitHub license](https://img.shields.io/github/license/elipzis/aPing.svg)](https://github.com/elipzis/aping/blob/master/LICENSE.md) [![GitHub (pre-)release](https://img.shields.io/badge/release-0.1.0-yellow.svg)](https://github.com/elipzis/aping/releases/tag/0.1.0) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/insanitydesign)
+# aPing [![GitHub license](https://img.shields.io/github/license/elipzis/aPing.svg)](https://github.com/elipzis/aping/blob/master/LICENSE.md) [![GitHub (pre-)release](https://img.shields.io/badge/release-0.3.0-yellow.svg)](https://github.com/elipzis/aping/releases/tag/0.1.0) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/insanitydesign)
 A simple API Ping tool to feed an OpenAPI 3.0 description file and call all endpoints
 
 ## Features
@@ -80,7 +80,7 @@ How many parallel processes should be spawned to query your endpoints.
 Define an output format. The output is written to a local `aping.XYZ` file, depending on your choice.
 
 #### Loop
-*If `loop > 1` is mixed with `response` all responses are logged!*
+*If `loop > 1` is mixed with `response` all responses are logged, if the path has parameters!*
 
 ## Build
 [Download and install][5] Golang for your platform.
