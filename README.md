@@ -24,7 +24,17 @@ Download the latest [release here][3].
 ## Usage
 For a quick start download a [release][3], change into the directory and execute the binary with your options, e.g.:
 ```shell script
-./aping -input="calls.json" -header='{\"Authorization\": \"Bearer eyXYZ\"}' -response -base=http://localhost:8080/api -out=csv
+./aping -input="calls.json" -header='{\"Authorization\": \"Bearer eyXYZ\"}' -response -base=http://localhost:8080/api -out=html -l=5 -w=5
+```
+
+Example progress output
+```
+Pinging 'REST API Documentation - Backend'
+Pinging 122 routes (Round 1) ... done! [122 in 11.586s]
+Pinging 122 routes (Round 2) ... done! [122 in 23.315s]
+Pinging 122 routes (Round 3) ... done! [122 in 37.262s]
+Pinging 122 routes (Round 4) ... done! [122 in 48.616s]
+Pinging 122 routes (Round 5) ... 27.9% ║█████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║ [34 in 1m1.386s]
 ```
 
 ### Options
