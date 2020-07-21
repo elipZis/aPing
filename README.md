@@ -1,4 +1,4 @@
-# aPing [![GitHub license](https://img.shields.io/github/license/elipzis/aPing.svg)](https://github.com/elipzis/aping/blob/master/LICENSE.md) [![GitHub (pre-)release](https://img.shields.io/badge/release-0.3.0-yellow.svg)](https://github.com/elipzis/aping/releases/tag/0.1.0) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/insanitydesign)
+# aPing [![GitHub license](https://img.shields.io/github/license/elipzis/aPing.svg)](https://github.com/elipzis/aping/blob/master/LICENSE.md) [![GitHub (pre-)release](https://img.shields.io/badge/release-0.4.0-yellow.svg)](https://github.com/elipzis/aping/releases/tag/0.1.0) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/insanitydesign)
 A simple API Ping tool to feed an OpenAPI 3.0 description file and call all endpoints
 
 ## Features
