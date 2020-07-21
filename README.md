@@ -10,14 +10,15 @@ A simple API Ping tool to feed an OpenAPI 3.0 description file and call all endp
 * Output the results to console, CSV, HTML, JSON or Markdown
 
 ## Latest Versions
+* 0.4.0
+  * Added regular expression filter option for paths
+  * Added response time milliseconds threshold
 * 0.3.0
   * Added average ms calculation for multiple loops
   * Added Bootstrap HTML template with sortable Table
   * Added JSON output
 * 0.2.0
   * Added an option to configure included query methods
-* 0.1.0
-  * Initial release
   
 Download the latest [release here][3].
 
@@ -27,14 +28,14 @@ For a quick start download a [release][3], change into the directory and execute
 ./aping -input="calls.json" -header='{\"Authorization\": \"Bearer eyXYZ\"}' -response -base=http://localhost:8080/api -out=html -l=5 -w=5
 ```
 
-Example progress output
+Example progress output:
 ```
 Pinging 'REST API Documentation - Backend'
 Pinging 122 routes (Round 1) ... done! [122 in 11.586s]
 Pinging 122 routes (Round 2) ... done! [122 in 23.315s]
 Pinging 122 routes (Round 3) ... done! [122 in 37.262s]
 Pinging 122 routes (Round 4) ... done! [122 in 48.616s]
-Pinging 122 routes (Round 5) ... 27.9% ║█████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║ [34 in 1m1.386s]
+Pinging 122 routes (Round 5) ... 27.9% ║█████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║ [34 in 1m1.386s]
 ```
 
 ### Options
@@ -58,6 +59,10 @@ Usage
         The amount of parallel workers to use (default 1)
   -methods string
         An array of query methods to include, e.g. '[\"GET\", \"POST\"]' (default "[\"GET\",\"POST\"]")
+  -threshold int
+        Only collect pings above this response threshold in milliseconds (default -1)
+  -filter string
+        A regular expression to filter paths. Only matches will be pinged!
 ```
 
 #### Input

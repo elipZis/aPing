@@ -9,6 +9,7 @@ import (
 	"github.com/jedib0t/go-pretty/progress"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -19,18 +20,23 @@ var QueryMethods []string
 
 // Define the possible command line arguments
 var (
-	inputFlag    = flag.String("input", "", "*The path/url to the Swagger/OpenAPI 3.0 input source")
-	basePathFlag = flag.String("base", "", "The base url to query")
-	outputFlag   = flag.String("out", "console", "The output format. Options: console, csv, html, md, json")
-	headerFlag   = flag.String("header", "{}", "Pass a custom header as JSON string, e.g. '{\"Authorization\": \"Bearer TOKEN\"}'")
-	workerFlag   = flag.Int("worker", 1, "The amount of parallel workers to use")
-	timeoutFlag  = flag.Int("timeout", 5, "The timeout in seconds per request")
-	loopFlag     = flag.Int("loop", 1, "How often to loop through all calls")
-	responseFlag = flag.Bool("response", false, "Include the response body in the output")
-	methodsFlag  = flag.String("methods", "[\"GET\",\"POST\"]", "An array of query methods to include, e.g. '[\"GET\", \"POST\"]'")
+	inputFlag     = flag.String("input", "", "*The path/url to the Swagger/OpenAPI 3.0 input source")
+	basePathFlag  = flag.String("base", "", "The base url to query")
+	outputFlag    = flag.String("out", "console", "The output format. Options: console, csv, html, md, json")
+	headerFlag    = flag.String("header", "{}", "Pass a custom header as JSON string, e.g. '{\"Authorization\": \"Bearer TOKEN\"}'")
+	workerFlag    = flag.Int("worker", 1, "The amount of parallel workers to use")
+	timeoutFlag   = flag.Int("timeout", 5, "The timeout in seconds per request")
+	loopFlag      = flag.Int("loop", 1, "How often to loop through all calls")
+	responseFlag  = flag.Bool("response", false, "Include the response body in the output")
+	methodsFlag   = flag.String("methods", "[\"GET\",\"POST\"]", "An array of query methods to include, e.g. '[\"GET\", \"POST\"]'")
+	filterFlag    = flag.String("filter", "", "A regular expression to filter matching paths. Only will be pinged!")
+	thresholdFlag = flag.Int("threshold", -1, "Only collect pings above this response threshold in milliseconds")
 
 	basePath string
 )
+
+// RegExp pattern for path filter
+var regExPathFilterPattern *regexp.Regexp
 
 // Logging output
 var progressWriter = progress.NewWriter()
@@ -45,6 +51,7 @@ func init() {
 	flag.IntVar(loopFlag, "l", 1, "How often to loop through all calls")
 	flag.BoolVar(responseFlag, "r", false, "Include the response body in the output")
 	flag.StringVar(methodsFlag, "m", "[\"GET\",\"POST\"]", "An array of query methods to include, e.g. '[\"GET\", \"POST\"]'")
+	flag.StringVar(filterFlag, "f", "", "A regular expression to filter matching paths. Only will be pinged!")
 
 	// Pre-set the progress writer
 	progressWriter.SetAutoStop(true)
@@ -117,6 +124,15 @@ func parseHeader() {
 	}
 }
 
+// Check for a path filter regular expression
+func parseFilter() {
+	if filterFlag != nil && *filterFlag != "" {
+		var err error
+		regExPathFilterPattern, err = regexp.Compile(*filterFlag)
+		checkFatalError(err)
+	}
+}
+
 // Parse all query methods to includefor calls
 func parseQueryMethods() {
 	err := json.Unmarshal([]byte(*methodsFlag), &QueryMethods)
@@ -125,6 +141,12 @@ func parseQueryMethods() {
 
 // Create a "pingable" url with parameters
 func parseUrl(path string, operation *openapi3.Operation) (string, bool) {
+	// Filter paths, if set
+	if regExPathFilterPattern != nil && !regExPathFilterPattern.Match([]byte(path)) {
+		return "", false
+	}
+
+	//
 	parsed := true
 	for _, v := range operation.Parameters {
 		// Required or path parameter, which is always required

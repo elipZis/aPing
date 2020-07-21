@@ -80,6 +80,8 @@ func main() {
 		parseBase(swagger)
 		// Check for methods to include
 		parseQueryMethods()
+		// Check for a path filter regular expression
+		parseFilter()
 
 		//
 		var title string
@@ -119,6 +121,14 @@ func main() {
 					pings++
 				}
 			}
+		}
+
+		// Nothing to ping or loop
+		if pings <= 0 {
+			log.Fatal("[aPing] No pingable routes found/matches!")
+		}
+		if *loopFlag <= 0 {
+			log.Fatal("[aPing] No loops to run!")
 		}
 
 		// Set up the Progress Writer options
@@ -248,19 +258,23 @@ func ping(pings <-chan *Ping, waitGroup *sync.WaitGroup, progressTracker *progre
 
 // Collect and merge/average all
 func collectPong(pong *Pong) {
-	p, ok := Results[pong.Ping.Path]
-	if !ok {
-		p = Pongs{
-			Path:   pong.Ping.Path,
-			Method: pong.Ping.Method,
+	// Ignore pongs above the threshold
+	if *thresholdFlag < 0 || pong.Time >= int64(*thresholdFlag) {
+		//
+		p, ok := Results[pong.Ping.Path]
+		if !ok {
+			p = Pongs{
+				Path:   pong.Ping.Path,
+				Method: pong.Ping.Method,
+			}
 		}
+		if p.Urls == nil || regExParameterPattern.Match([]byte(pong.Ping.Path)) {
+			p.Urls = append(p.Urls, pong.Ping.Url)
+			p.Responses = append(p.Responses, pong.Response)
+		}
+		p.Time += pong.Time
+		Results[pong.Ping.Path] = p
 	}
-	if p.Urls == nil || regExParameterPattern.Match([]byte(pong.Ping.Path)) {
-		p.Urls = append(p.Urls, pong.Ping.Url)
-		p.Responses = append(p.Responses, pong.Response)
-	}
-	p.Time += pong.Time
-	Results[pong.Ping.Path] = p
 
 	// Return to the source Neo
 	pongPool.Put(pong)
