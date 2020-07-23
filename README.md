@@ -1,9 +1,9 @@
-# aPing [![GitHub license](https://img.shields.io/github/license/elipzis/aPing.svg)](https://github.com/elipzis/aping/blob/master/LICENSE.md) [![GitHub (pre-)release](https://img.shields.io/badge/release-0.4.0-yellow.svg)](https://github.com/elipzis/aping/releases/tag/0.4.0) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/insanitydesign)
-A simple API Ping tool to feed an OpenAPI 3.0 description file and call all endpoints
+# aPing [![GitHub license](https://img.shields.io/github/license/elipzis/aPing.svg)](https://github.com/elipzis/aping/blob/master/LICENSE.md) [![GitHub (pre-)release](https://img.shields.io/badge/release-0.4.0-yellow.svg)](https://github.com/elipzis/aping/releases/tag/0.4.0) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/elipzis)
+A simple API Ping tool to feed a Swagger/OpenAPI 3.0 document file, call all paths and record time and responses
 
 ## Features
-* Read [OpenAPI 3.0][2] api definition files and call all endpoints
-* Ping all endpoints in parallel workers and/or over several loops
+* Read [Swagger/OpenAPI 3.0][2] api definition files and call all endpoints
+* Ping all paths in parallel workers and/or over several loops
 * Pass custom headers, e.g. `Authorization`
 * Create random `integer` and `string` parameters for urls
 * Track the time and response body per request
