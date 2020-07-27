@@ -1,8 +1,8 @@
 # aPing [![GitHub license](https://img.shields.io/github/license/elipzis/aPing.svg)](https://github.com/elipzis/aping/blob/master/LICENSE.md) [![GitHub (pre-)release](https://img.shields.io/badge/release-0.4.0-yellow.svg)](https://github.com/elipzis/aping/releases/tag/0.4.0) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/elipzis)
-A simple API Ping tool to feed a Swagger/OpenAPI 3.0 document file, call all paths and record time and responses
+A simple API Ping tool to feed a Swagger/OpenAPI 3.0 document file, call all paths and record time and responses, e.g. to benchmark an endpoint.
 
 ## Features
-* Read [Swagger/OpenAPI 3.0][2] api definition files and call all endpoints
+* Read [Swagger/OpenAPI 3.0][2] api definition files and call all paths
 * Ping all paths in parallel workers and/or over several loops
 * Pass custom headers, e.g. `Authorization`
 * Create random `integer` and `string` parameters for urls
@@ -15,7 +15,7 @@ A simple API Ping tool to feed a Swagger/OpenAPI 3.0 document file, call all pat
   * Added response time milliseconds threshold
 * 0.3.0
   * Added average ms calculation for multiple loops
-  * Added Bootstrap HTML template with sortable Table
+  * Added Bootstrap HTML template with sortable table
   * Added JSON output
 * 0.2.0
   * Added an option to configure included query methods
@@ -67,7 +67,7 @@ Usage
 
 #### Input
 Reference a file input somewhere reachable by your machine. 
-References in the [OpenAPI][2] specification can be resolved if absolute relative to the main file.
+References in the [OpenAPI][2] specification can be resolved if absolute or relative to the main file.
 
 #### Base
 Pass a base url such as `http://localhost:8080/api`.
@@ -94,6 +94,15 @@ How many parallel processes should be spawned to query your endpoints.
 #### Output
 Define an output format. The output is written to a local `aping.XYZ` file, depending on your choice.
 
+The output contains (at most):
+* The pinged path
+* The effective URL*s* (base + path)
+* The query method
+* The average milliseconds
+* The response*s*
+
+Some data is only available with their according flags, i.e. `loop` and `response`
+
 #### Loop
 *If `loop > 1` is mixed with `response` all responses are logged, if the path has parameters!*
 
@@ -114,7 +123,7 @@ aPing has been tested under the following conditions
 aPing is not fully-fledged (yet). Some functionality is missing and errors may occur.
 
 Known issues are:
-* Endpoints having request bodies are not pinged
+* Paths having request bodies are not pinged
 * Parameters besides `integer` and `string` are not pinged 
 
 ## License and Credits
